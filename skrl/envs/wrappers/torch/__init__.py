@@ -14,6 +14,7 @@ from skrl.envs.wrappers.torch.isaaclab_envs import IsaacLabMultiAgentWrapper, Is
 from skrl.envs.wrappers.torch.omniverse_isaacgym_envs import OmniverseIsaacGymWrapper
 from skrl.envs.wrappers.torch.pettingzoo_envs import PettingZooWrapper
 from skrl.envs.wrappers.torch.robosuite_envs import RobosuiteWrapper
+from skrl.envs.wrappers.torch.vmas_envs import VmasMultiAgentWrapper, VmasWrapper
 
 
 __all__ = ["wrap_env", "Wrapper", "MultiAgentEnvWrapper"]
@@ -119,6 +120,12 @@ def wrap_env(env: Any, wrapper: str = "auto", verbose: bool = True) -> Union[Wra
             return "dm"
         elif _in("pettingzoo.utils.env", base_classes) or _in("pettingzoo.utils.wrappers", base_classes):
             return "pettingzoo"
+        elif _in("vmas.*", base_classes) and _in(
+            ["vmas.*skrl_single_agent*"], [str(env.__class__).replace("<class '", "").replace("'>", "")]
+        ):
+            return "vmas"
+        elif _in("vmas.*", base_classes):
+            return "vmas-multi-agent"
         elif _in("gymnasium..*", base_classes):
             return "gymnasium"
         elif _in("gym..*", base_classes):
@@ -172,6 +179,15 @@ def wrap_env(env: Any, wrapper: str = "auto", verbose: bool = True) -> Union[Wra
         if verbose:
             logger.info("Environment wrapper: Omniverse Isaac Gym")
         return OmniverseIsaacGymWrapper(env)
+    elif type(wrapper) is str and wrapper.startswith("vmas"):
+        if wrapper == "vmas-multi-agent":
+            if verbose:
+                logger.info("Environment wrapper: VMAS (multi-agent)")
+            return VmasMultiAgentWrapper(env)
+        else:
+            if verbose:
+                logger.info("Environment wrapper: VMAS")
+            return VmasWrapper(env)
     elif type(wrapper) is str and wrapper.startswith("isaaclab"):
         # use specified wrapper
         if wrapper == "isaaclab-single-agent":
