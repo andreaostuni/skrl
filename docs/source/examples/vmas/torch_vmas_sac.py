@@ -42,8 +42,8 @@ class Actor(GaussianMixin, Model):
     def compute(self, inputs, role):
         x = F.relu(self.linear_layer_1(inputs["states"]))
         x = F.relu(self.linear_layer_2(x))
-        # Pendulum-v1 action_space is -2 to 2
-        return 2 * torch.tanh(self.action_layer(x)), self.log_std_parameter, {}
+        # V-MAS social_navigation action_space is -1 to 1
+        return torch.tanh(self.action_layer(x)), self.log_std_parameter, {}
 
 
 class Critic(DeterministicMixin, Model):
@@ -69,7 +69,7 @@ try:
 
     env = make_env(
         scenario="social_navigation",
-        num_envs=10,
+        num_envs=5,
         device="cuda",
         continuous_actions=True,
         dict_spaces=True,
@@ -128,7 +128,7 @@ agent = SAC(
 
 
 # configure and instantiate the RL trainer
-cfg_trainer = {"timesteps": 300, "headless": False}
+cfg_trainer = {"timesteps": 300, "headless": True}
 trainer = SequentialTrainer(cfg=cfg_trainer, env=env, agents=[agent])
 
 # start training

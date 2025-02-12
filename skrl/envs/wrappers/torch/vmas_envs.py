@@ -36,7 +36,7 @@ class VmasWrapper(Wrapper):
         self._env = env
         self._unwrapped = env.unwrapped
         if self._vectorized:
-            # self._reset_once = True
+            self._reset_once = True
             self._observation = None
             self._info = None
 
@@ -80,14 +80,13 @@ class VmasWrapper(Wrapper):
         """
 
         if self._vectorized:
-            # if self._reset_once:
-            observation, self._info = self._env.reset()
-            self._observation = observation
-            #     self._reset_once = False
+            if self._reset_once:
+                observation, self._info = self._env.reset()
+                self._observation = observation
+                self._reset_once = False
             return self._observation, self._info
 
         observation, info = self._env.reset()
-        observation = flatten_tensorized_space(tensorize_space(self.observation_space, observation, self.device))
         return observation, info
 
     def render(self, *args, **kwargs) -> None:
@@ -111,7 +110,9 @@ class VmasMultiAgentWrapper(MultiAgentEnvWrapper):
         :type env: Any supported Vmas environment
         """
         super().__init__(env)
-        assert isinstance(env, SKRLVectorizedWrapper), f"Unsupported environment type: {type(env)}"
+        assert isinstance(env, SKRLVectorizedWrapper) or isinstance(
+            env, SKRLWrapper
+        ), f"Unsupported environment type: {type(env)}"
         self._env = env
         self._unwrapped = env.unwrapped
 
@@ -134,8 +135,7 @@ class VmasMultiAgentWrapper(MultiAgentEnvWrapper):
         :return: Observation, reward, terminated, truncated, info
         :rtype: tuple of torch.Tensor and any other info
         """
-        observation, reward, terminated, info = self._env.step(unflatten_tensorized_space(self.action_space, actions))
-        observation = flatten_tensorized_space(tensorize_space(self.observation_space, observation))
+        observation, reward, terminated, info = self._env.step(actions)
         truncated = torch.zeros_like(terminated)
         return observation, reward.view(-1, 1), terminated.view(-1, 1), truncated.view(-1, 1), info
 
@@ -146,7 +146,6 @@ class VmasMultiAgentWrapper(MultiAgentEnvWrapper):
         :rtype: torch.Tensor and any other info
         """
         observation, info = self._env.reset()
-        observation = flatten_tensorized_space(tensorize_space(self.observation_space, observation))
         return observation, info
 
     def render(self, *args, **kwargs) -> None:
