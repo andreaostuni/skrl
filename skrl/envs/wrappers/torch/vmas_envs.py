@@ -12,9 +12,12 @@ from skrl.utils.spaces.torch import (
     unflatten_tensorized_space,
     untensorize_space,
 )
-from vmas.simulator.environment.skrl.skrl_single_agent import SKRLSingleAgentWrapper
+from vmas.simulator.environment.skrl.skrl_single_agent import SKRLSingleAgentWrapper, SKRLSingleAgentWrapperMPC
 from vmas.simulator.environment.skrl.skrl import SKRLWrapper
-from vmas.simulator.environment.skrl.skrl_single_agent_vec import SKRLSingleAgentVectorizedWrapper
+from vmas.simulator.environment.skrl.skrl_single_agent_vec import (
+    SKRLSingleAgentVectorizedWrapper,
+    SKRLSingleAgentVectorizedWrapperMPC,
+)
 from vmas.simulator.environment.skrl.skrl_vec import SKRLVectorizedWrapper
 
 
@@ -98,6 +101,29 @@ class VmasWrapper(Wrapper):
     def close(self) -> None:
         """Close the environment"""
         self._env.close()
+
+
+class VmasWrapperMPC(VmasWrapper):
+    def __init__(self, env: Any) -> None:
+        """Vmas environment wrapper
+
+        :param env: The environment to wrap
+        :type env: Any supported Vmas environment
+        """
+        super().__init__(env)
+        assert isinstance(env, SKRLSingleAgentWrapperMPC) or isinstance(
+            env, SKRLSingleAgentVectorizedWrapperMPC
+        ), f"Unsupported environment type: {type(env)}"
+
+    @property
+    def mpc_state_space(self) -> gymnasium.Space:
+        """MPC state space"""
+        if self._vectorized:
+            return self._env.single_mpc_state_space
+        return self._env.mpc_state_space
+
+    def mpc_state(self):
+        return self._env.mpc_state()
 
 
 class VmasMultiAgentWrapper(MultiAgentEnvWrapper):
