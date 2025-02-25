@@ -160,12 +160,17 @@ class Model(torch.nn.Module):
         elif isinstance(self.action_space, gymnasium.spaces.Box):
             if self._random_distribution is None:
                 self._random_distribution = torch.distributions.uniform.Uniform(
-                    low=torch.tensor(self.action_space.low[0], device=self.device, dtype=torch.float32),
-                    high=torch.tensor(self.action_space.high[0], device=self.device, dtype=torch.float32),
+                    low=torch.tensor(self.action_space.low, device=self.device, dtype=torch.float32),
+                    high=torch.tensor(self.action_space.high, device=self.device, dtype=torch.float32),
                 )
-
+            if self._random_distribution.batch_shape == torch.Size([]):
+                return (
+                    self._random_distribution.sample(sample_shape=(inputs["states"].shape[0], self.num_actions)),
+                    None,
+                    {},
+                )
             return (
-                self._random_distribution.sample(sample_shape=(inputs["states"].shape[0], self.num_actions)),
+                self._random_distribution.sample(sample_shape=([inputs["states"].shape[0]])),
                 None,
                 {},
             )

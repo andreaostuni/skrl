@@ -116,7 +116,7 @@ class PPO_MPC(Agent):
             device=device,
             cfg=_cfg,
         )
-        # mpc state space
+        # MPC state space
         self.mpc_state_space = mpc_state_space
 
         # models
